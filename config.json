@@ -4,5 +4,12 @@
         "repository_local_dir": "categories",
         "remote_name": "origin",
         "remote_branch": "main"
+    },
+    "definition_downloader": {
+        "update_interval_seconds": 3600,
+        "download_retry_count": 5,
+        "download_retry_interval_seconds": 120,
+        "update_retry_count": 5,
+        "update_retry_interval_seconds": 300
     }
 }

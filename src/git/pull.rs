@@ -18,6 +18,8 @@ use git2::Repository;
 use std::io::{self, Write};
 use std::str;
 
+use super::clone::git_credentials_callback;
+
 fn do_fetch<'a>(
     repo: &'a git2::Repository,
     refs: &[&str],
@@ -25,6 +27,7 @@ fn do_fetch<'a>(
 ) -> Result<git2::AnnotatedCommit<'a>, git2::Error> {
     let mut cb = git2::RemoteCallbacks::new();
 
+    cb.credentials(git_credentials_callback);
     // Print out our transfer progress.
     cb.transfer_progress(|stats| {
         if stats.received_objects() == stats.total_objects() {
