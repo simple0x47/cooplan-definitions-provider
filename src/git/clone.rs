@@ -8,7 +8,7 @@ use git2::{
 const ENV_GIT_USERNAME: &str = "GIT_USERNAME";
 const ENV_GIT_PASSWORD: &str = "GIT_PASSWORD";
 
-fn credentials_callback(
+pub fn git_credentials_callback(
     _: &str,
     _: Option<&str>,
     allowed_types: CredentialType,
@@ -45,7 +45,7 @@ pub fn git_clone(
 ) -> Result<Repository, crate::error::Error> {
     let mut callbacks = RemoteCallbacks::new();
 
-    callbacks.credentials(credentials_callback);
+    callbacks.credentials(git_credentials_callback);
 
     let mut fetch_options = FetchOptions::new();
     fetch_options.remote_callbacks(callbacks);

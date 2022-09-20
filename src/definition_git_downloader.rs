@@ -2,7 +2,6 @@ use git2::Repository;
 
 use crate::{
     config::git_config::GitConfig,
-    definition_downloader::DefinitionDownloader,
     error::{Error, ErrorKind},
     git::{clone::git_clone, pull::git_pull},
 };
@@ -41,17 +40,15 @@ impl DefinitionGitDownloader {
             Err(_) => self.clone_repository(),
         }
     }
-}
 
-impl DefinitionDownloader for DefinitionGitDownloader {
-    fn download(&self) -> Result<(), Error> {
+    pub fn download(&self) -> Result<(), Error> {
         match self.get_repository() {
             Ok(_) => Ok(()),
             Err(error) => Err(error),
         }
     }
 
-    fn update(&self) -> Result<(), Error> {
+    pub fn update(&self) -> Result<(), Error> {
         match self.get_repository() {
             Ok(repository) => {
                 match git_pull(
