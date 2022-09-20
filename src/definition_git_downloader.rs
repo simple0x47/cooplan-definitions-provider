@@ -1,6 +1,7 @@
 use git2::Repository;
 
 use crate::{
+    config::git_config::GitConfig,
     definition_downloader::DefinitionDownloader,
     error::{Error, ErrorKind},
     git::{clone::git_clone, pull::git_pull},
@@ -14,17 +15,12 @@ pub struct DefinitionGitDownloader {
 }
 
 impl DefinitionGitDownloader {
-    pub fn new(
-        repository_url: String,
-        repository_local_dir: String,
-        remote_name: String,
-        remote_branch: String,
-    ) -> DefinitionGitDownloader {
+    pub fn new(git_config: GitConfig) -> DefinitionGitDownloader {
         DefinitionGitDownloader {
-            repository_url,
-            repository_local_dir,
-            remote_name,
-            remote_branch,
+            repository_url: git_config.repository_url,
+            repository_local_dir: git_config.repository_local_dir,
+            remote_name: git_config.remote_name,
+            remote_branch: git_config.remote_branch,
         }
     }
 

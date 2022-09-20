@@ -1,3 +1,4 @@
+pub mod config;
 pub mod definition_downloader;
 pub mod definition_git_downloader;
 pub mod definition_repository;
@@ -8,22 +9,18 @@ use std::{io::Error, time::Duration};
 
 use definition_downloader::DefinitionDownloader;
 use definition_git_downloader::DefinitionGitDownloader;
-use tokio::{
-    task,
-    time::{self},
-};
+use tokio::{task, time};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let download = task::spawn(async {
+    let config = crate::config::config_reader_builder::default().read()?;
+
+    let git_config = config.git();
+
+    let download = task::spawn(async move {
         let mut interval = time::interval(Duration::from_secs(3600u64));
 
-        let downloader: DefinitionGitDownloader = DefinitionGitDownloader::new(
-            String::from("https://github.com/simple0x47/cooplan-definitions.git"),
-            String::from("categories"),
-            String::from("origin"),
-            String::from("main"),
-        );
+        let downloader: DefinitionGitDownloader = DefinitionGitDownloader::new(git_config);
 
         match downloader.download() {
             Ok(_) => (),
