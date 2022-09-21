@@ -6,6 +6,7 @@ pub enum ErrorKind {
     FailedToOpenRepository,
     FailedToUpdateDefinitions,
     FailedToReadEnvironmentVariables,
+    SourceMissingId,
 }
 
 #[derive(Debug)]
