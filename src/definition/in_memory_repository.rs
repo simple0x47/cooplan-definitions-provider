@@ -2,8 +2,8 @@ use cooplan_definitions_lib::validated_source_category::ValidatedSourceCategory;
 use tokio::sync::watch::Receiver;
 
 use crate::{
-    definition::definition_repository::DefinitionRepository,
     definition::reader_state::ReaderState,
+    definition::repository::Repository,
     error::{Error, ErrorKind},
 };
 
@@ -19,7 +19,7 @@ impl InMemoryRepository {
     }
 }
 
-impl DefinitionRepository for InMemoryRepository {
+impl Repository for InMemoryRepository {
     fn read_all(&self) -> Result<Vec<ValidatedSourceCategory>, Error> {
         if !self.reader_state_receiver.borrow().available {
             return Err(Error::new(
