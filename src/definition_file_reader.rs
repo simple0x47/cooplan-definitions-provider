@@ -1,9 +1,5 @@
-use std::{cell::RefCell, rc::Rc};
-
-use cooplan_definitions_io_lib::{
-    category_file_io::build_for_all_categories, source_category_converter::SourceCategoryConverter,
-};
-use cooplan_definitions_lib::category::Category;
+use cooplan_definitions_io_lib::category_file_io::build_for_all_categories;
+use cooplan_definitions_lib::validated_source_category::ValidatedSourceCategory;
 use tokio::sync::watch::{Receiver, Sender};
 
 use crate::{
@@ -11,6 +7,7 @@ use crate::{
     definition_reader_state::DefinitionReaderState,
 };
 
+/// Retrieves the definitions from a local directory, whenever the downloader downloads or updates that directory.
 pub struct DefinitionFileReader {
     path: String,
     state_sender: Sender<DefinitionReaderState>,
@@ -43,30 +40,32 @@ impl DefinitionFileReader {
     fn read(&self) {
         match build_for_all_categories(self.path.clone()) {
             Ok(categories_io) => {
-                let mut converter = SourceCategoryConverter::new();
-                let mut categories: Vec<Rc<RefCell<Category>>> = Vec::new();
+                let mut categories: Vec<ValidatedSourceCategory> = Vec::new();
 
                 for mut category_io in categories_io {
                     match category_io.read() {
-                        Ok(source_category) => match converter.convert(source_category) {
-                            Ok(category) => categories.push(category),
-                            Err(error) => {
-                                log::error!("failed to convert source category: {}", error);
+                        Ok(source_category) => {
+                            match ValidatedSourceCategory::try_from(source_category) {
+                                Ok(category) => categories.push(category),
+                                Err(error) => {
+                                    log::error!("failed to validate source category: {}", error);
 
-                                if !self.state_sender.borrow().available {
-                                    self.state_sender
-                                        .send_replace(DefinitionReaderState::new_error());
+                                    if !self.state_sender.borrow().available {
+                                        self.state_sender.send_replace(
+                                            DefinitionReaderState::new_not_available(),
+                                        );
+                                    }
+
+                                    return;
                                 }
-
-                                return;
                             }
-                        },
+                        }
                         Err(error) => {
                             log::error!("failed to read category: {}", error);
 
                             if !self.state_sender.borrow().available {
                                 self.state_sender
-                                    .send_replace(DefinitionReaderState::new_error());
+                                    .send_replace(DefinitionReaderState::new_not_available());
                             }
 
                             return;
@@ -82,7 +81,7 @@ impl DefinitionFileReader {
 
                 if !self.state_sender.borrow().available {
                     self.state_sender
-                        .send_replace(DefinitionReaderState::new_error());
+                        .send_replace(DefinitionReaderState::new_not_available());
                 }
             }
         }

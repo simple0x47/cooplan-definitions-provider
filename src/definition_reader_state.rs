@@ -1,32 +1,32 @@
-use std::{cell::RefCell, rc::Rc, time::Instant};
+use std::time::Instant;
 
-use cooplan_definitions_lib::category::Category;
+use cooplan_definitions_lib::validated_source_category::ValidatedSourceCategory;
 
 #[derive(Debug, Clone)]
 pub struct DefinitionReaderState {
     pub available: bool,
-    pub root: Vec<Rc<RefCell<Category>>>,
+    pub categories: Vec<ValidatedSourceCategory>,
     pub last_updated: Instant,
 }
 
 impl DefinitionReaderState {
-    pub fn new(available: bool, root: Vec<Rc<RefCell<Category>>>) -> DefinitionReaderState {
+    pub fn new(available: bool, categories: Vec<ValidatedSourceCategory>) -> DefinitionReaderState {
         DefinitionReaderState {
             available: available,
-            root: root,
+            categories,
             last_updated: Instant::now(),
         }
     }
 
-    pub fn new_error() -> DefinitionReaderState {
+    pub fn new_not_available() -> DefinitionReaderState {
         DefinitionReaderState {
             available: false,
-            root: Vec::new(),
+            categories: Vec::new(),
             last_updated: Instant::now(),
         }
     }
 
-    pub fn root(&self) -> Vec<Rc<RefCell<Category>>> {
-        self.root.clone()
+    pub fn categories(&self) -> Vec<ValidatedSourceCategory> {
+        self.categories.clone()
     }
 }

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use async_recursion::async_recursion;
-use tokio::{sync::watch::Sender, time};
+use tokio::{sync::watch::Sender, time::sleep};
 
 use crate::{
     config::definition_downloader_config::DefinitionDownloaderConfig,
@@ -37,10 +37,10 @@ impl DefinitionDownloaderAsyncWrapper {
     pub async fn run(&mut self) {
         self.try_download().await;
 
-        let mut interval = time::interval(Duration::from_secs(self.config.update_interval_seconds));
+        let update_duration = Duration::from_secs(self.config.update_interval_seconds);
 
         loop {
-            interval.tick().await;
+            sleep(update_duration).await;
 
             self.try_update().await;
         }
@@ -67,11 +67,11 @@ impl DefinitionDownloaderAsyncWrapper {
                     std::process::exit(1);
                 }
 
-                let mut interval = time::interval(Duration::from_secs(
+                sleep(Duration::from_secs(
                     self.config.download_retry_interval_seconds,
-                ));
+                ))
+                .await;
 
-                interval.tick().await;
                 self.download_retry_count += 1;
                 log::warn!(
                     "retrying to download definitions, count: {}",
@@ -104,11 +104,11 @@ impl DefinitionDownloaderAsyncWrapper {
                     return;
                 }
 
-                let mut interval = time::interval(Duration::from_secs(
+                sleep(Duration::from_secs(
                     self.config.update_retry_interval_seconds,
-                ));
+                ))
+                .await;
 
-                interval.tick().await;
                 self.update_retry_count += 1;
                 log::info!(
                     "retrying to update definitions, count: {}",
