@@ -3,5 +3,6 @@ pub mod downloader_state;
 pub mod file_reader;
 pub mod git_downloader;
 pub mod in_memory_repository;
+pub mod rabbitmq_output;
 pub mod reader_state;
 pub mod repository;

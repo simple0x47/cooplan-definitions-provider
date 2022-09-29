@@ -7,7 +7,11 @@ pub enum ErrorKind {
     FailedToUpdateDefinitions,
     FailedToReadEnvironmentVariables,
     SourceMissingId,
-    UnavailableDefinitions,
+    DefinitionsNotAvailable,
+    SerializationFailure,
+    ConnectionFailure,
+    ChannelNotAvailable,
+    DataWritingFailure,
 }
 
 #[derive(Debug)]

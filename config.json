@@ -11,5 +11,6 @@
         "download_retry_interval_seconds": 120,
         "update_retry_count": 5,
         "update_retry_interval_seconds": 300
-    }
+    },
+    "amqp_channel": "definition-provider-output"
 }

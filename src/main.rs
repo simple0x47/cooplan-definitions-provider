@@ -5,11 +5,15 @@ pub mod git;
 
 use std::io::{Error, ErrorKind};
 
-use definition::downloader_async_wrapper::DownloaderAsyncWrapper;
+use cooplan_definitions_lib::definition::Definition;
 use definition::downloader_state::DownloaderState;
 use definition::file_reader::FileReader;
 use definition::git_downloader::GitDownloader;
 use definition::reader_state::ReaderState;
+use definition::{
+    downloader_async_wrapper::DownloaderAsyncWrapper, rabbitmq_output::RabbitMQOutput,
+};
+use lapin::protocol::channel;
 use tokio::{sync::watch, task};
 
 #[tokio::main]
@@ -30,6 +34,8 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn run_definition_downloader() -> Result<(), Error> {
+    let config = crate::config::config_reader_builder::default().read()?;
+
     let definition_downloader_state = DownloaderState::new(false);
 
     let (downloader_state_sender, mut downloader_state_receiver) =
@@ -47,17 +53,52 @@ async fn run_definition_downloader() -> Result<(), Error> {
         reader.run().await;
     });
 
+    let connection_uri = std::env::var("AMQP_CONNECTION_URI").unwrap();
+    let channel_name = config.amqp_channel();
+
     tokio::spawn(async move {
+        let mut output = RabbitMQOutput::new(connection_uri, channel_name);
+
+        match output.connect().await {
+            Ok(_) => {
+                if reader_state_receiver.borrow().available {
+                    let categories = reader_state_receiver.borrow().categories();
+                    match output
+                        .set(Definition::new("1".to_string(), categories))
+                        .await
+                    {
+                        Ok(_) => (),
+                        Err(error) => {
+                            println!("error: {}", error);
+                            return;
+                        }
+                    }
+                }
+            }
+            Err(error) => {
+                println!("error: {}", error);
+                return;
+            }
+        }
+
         loop {
             reader_state_receiver.changed().await;
 
-            for category in reader_state_receiver.borrow().categories() {
-                println!("Category: {:?}", category);
+            if reader_state_receiver.borrow().available {
+                let categories = reader_state_receiver.borrow().categories();
+                match output
+                    .set(Definition::new("1".to_string(), categories))
+                    .await
+                {
+                    Ok(_) => (),
+                    Err(error) => {
+                        println!("error: {}", error);
+                        return;
+                    }
+                }
             }
         }
     });
-
-    let config = crate::config::config_reader_builder::default().read()?;
 
     let definition_downloader_config = config.definition_downloader();
     let git_config = config.git();
