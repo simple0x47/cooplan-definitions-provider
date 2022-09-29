@@ -2,25 +2,22 @@ use cooplan_definitions_io_lib::category_file_io::build_for_all_categories;
 use cooplan_definitions_lib::validated_source_category::ValidatedSourceCategory;
 use tokio::sync::watch::{Receiver, Sender};
 
-use crate::{
-    definition_downloader_state::DefinitionDownloaderState,
-    definition_reader_state::DefinitionReaderState,
-};
+use crate::{definition::downloader_state::DownloaderState, definition::reader_state::ReaderState};
 
 /// Retrieves the definitions from a local directory, whenever the downloader downloads or updates that directory.
-pub struct DefinitionFileReader {
+pub struct FileReader {
     path: String,
-    state_sender: Sender<DefinitionReaderState>,
-    downloader_state_receiver: Receiver<DefinitionDownloaderState>,
+    state_sender: Sender<ReaderState>,
+    downloader_state_receiver: Receiver<DownloaderState>,
 }
 
-impl DefinitionFileReader {
+impl FileReader {
     pub fn new(
         path: String,
-        state_sender: Sender<DefinitionReaderState>,
-        downloader_state_receiver: Receiver<DefinitionDownloaderState>,
-    ) -> DefinitionFileReader {
-        DefinitionFileReader {
+        state_sender: Sender<ReaderState>,
+        downloader_state_receiver: Receiver<DownloaderState>,
+    ) -> FileReader {
+        FileReader {
             path,
             state_sender,
             downloader_state_receiver,
@@ -51,9 +48,8 @@ impl DefinitionFileReader {
                                     log::error!("failed to validate source category: {}", error);
 
                                     if !self.state_sender.borrow().available {
-                                        self.state_sender.send_replace(
-                                            DefinitionReaderState::new_not_available(),
-                                        );
+                                        self.state_sender
+                                            .send_replace(ReaderState::new_not_available());
                                     }
 
                                     return;
@@ -65,7 +61,7 @@ impl DefinitionFileReader {
 
                             if !self.state_sender.borrow().available {
                                 self.state_sender
-                                    .send_replace(DefinitionReaderState::new_not_available());
+                                    .send_replace(ReaderState::new_not_available());
                             }
 
                             return;
@@ -74,14 +70,14 @@ impl DefinitionFileReader {
                 }
 
                 self.state_sender
-                    .send_replace(DefinitionReaderState::new(true, categories));
+                    .send_replace(ReaderState::new(true, categories));
             }
             Err(error) => {
                 log::error!("failed to read category: {}", error);
 
                 if !self.state_sender.borrow().available {
                     self.state_sender
-                        .send_replace(DefinitionReaderState::new_not_available());
+                        .send_replace(ReaderState::new_not_available());
                 }
             }
         }

@@ -7,6 +7,7 @@ pub enum ErrorKind {
     FailedToUpdateDefinitions,
     FailedToReadEnvironmentVariables,
     SourceMissingId,
+    UnavailableDefinitions,
 }
 
 #[derive(Debug)]

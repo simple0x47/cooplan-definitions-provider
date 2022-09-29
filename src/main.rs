@@ -1,20 +1,15 @@
 pub mod config;
-pub mod definition_downloader_async_wrapper;
-pub mod definition_downloader_state;
-pub mod definition_file_reader;
-pub mod definition_git_downloader;
-pub mod definition_reader_state;
-pub mod definition_repository;
+pub mod definition;
 pub mod error;
 pub mod git;
 
 use std::io::{Error, ErrorKind};
 
-use definition_downloader_async_wrapper::DefinitionDownloaderAsyncWrapper;
-use definition_downloader_state::DefinitionDownloaderState;
-use definition_file_reader::DefinitionFileReader;
-use definition_git_downloader::DefinitionGitDownloader;
-use definition_reader_state::DefinitionReaderState;
+use definition::downloader_async_wrapper::DownloaderAsyncWrapper;
+use definition::downloader_state::DownloaderState;
+use definition::file_reader::FileReader;
+use definition::git_downloader::GitDownloader;
+use definition::reader_state::ReaderState;
 use tokio::{sync::watch, task};
 
 #[tokio::main]
@@ -35,15 +30,15 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn run_definition_downloader() -> Result<(), Error> {
-    let definition_downloader_state = DefinitionDownloaderState::new(false);
+    let definition_downloader_state = DownloaderState::new(false);
 
     let (downloader_state_sender, mut downloader_state_receiver) =
         watch::channel(definition_downloader_state);
 
-    let definition_reader_state = DefinitionReaderState::new_not_available();
+    let definition_reader_state = ReaderState::new_not_available();
     let (reader_state_sender, mut reader_state_receiver) = watch::channel(definition_reader_state);
     tokio::spawn(async move {
-        let mut reader = DefinitionFileReader::new(
+        let mut reader = FileReader::new(
             String::from("./categories/"),
             reader_state_sender,
             downloader_state_receiver,
@@ -68,8 +63,8 @@ async fn run_definition_downloader() -> Result<(), Error> {
     let git_config = config.git();
 
     let download = task::spawn(async move {
-        let definition_git_downloader = DefinitionGitDownloader::new(git_config);
-        let mut definition_wrapper = DefinitionDownloaderAsyncWrapper::new(
+        let definition_git_downloader = GitDownloader::new(git_config);
+        let mut definition_wrapper = DownloaderAsyncWrapper::new(
             definition_git_downloader,
             definition_downloader_config,
             downloader_state_sender,

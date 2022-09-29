@@ -5,26 +5,25 @@ use tokio::{sync::watch::Sender, time::sleep};
 
 use crate::{
     config::definition_downloader_config::DefinitionDownloaderConfig,
-    definition_downloader_state::DefinitionDownloaderState,
-    definition_git_downloader::DefinitionGitDownloader,
+    definition::downloader_state::DownloaderState, definition::git_downloader::GitDownloader,
 };
 
-pub struct DefinitionDownloaderAsyncWrapper {
-    downloader: DefinitionGitDownloader,
+pub struct DownloaderAsyncWrapper {
+    downloader: GitDownloader,
     config: DefinitionDownloaderConfig,
-    state_sender: Sender<DefinitionDownloaderState>,
+    state_sender: Sender<DownloaderState>,
 
     download_retry_count: i32,
     update_retry_count: i32,
 }
 
-impl DefinitionDownloaderAsyncWrapper {
+impl DownloaderAsyncWrapper {
     pub fn new(
-        definition_downloader: DefinitionGitDownloader,
+        definition_downloader: GitDownloader,
         definition_downloader_config: DefinitionDownloaderConfig,
-        definition_downloader_state_sender: Sender<DefinitionDownloaderState>,
-    ) -> DefinitionDownloaderAsyncWrapper {
-        DefinitionDownloaderAsyncWrapper {
+        definition_downloader_state_sender: Sender<DownloaderState>,
+    ) -> DownloaderAsyncWrapper {
+        DownloaderAsyncWrapper {
             downloader: definition_downloader,
             config: definition_downloader_config,
             state_sender: definition_downloader_state_sender,
@@ -49,8 +48,7 @@ impl DefinitionDownloaderAsyncWrapper {
     #[async_recursion]
     async fn try_download(&mut self) {
         if self.state_sender.borrow().available {
-            self.state_sender
-                .send_replace(DefinitionDownloaderState::new(false));
+            self.state_sender.send_replace(DownloaderState::new(false));
         }
 
         match self.downloader.download() {
@@ -58,8 +56,7 @@ impl DefinitionDownloaderAsyncWrapper {
                 log::info!("successfully downloaded definitions");
                 self.download_retry_count = 0;
 
-                self.state_sender
-                    .send_replace(DefinitionDownloaderState::new(true));
+                self.state_sender.send_replace(DownloaderState::new(true));
             }
             Err(error) => {
                 if self.download_retry_count >= self.config.download_retry_count {
@@ -86,8 +83,7 @@ impl DefinitionDownloaderAsyncWrapper {
     #[async_recursion]
     async fn try_update(&mut self) {
         if self.state_sender.borrow().available {
-            self.state_sender
-                .send_replace(DefinitionDownloaderState::new(false));
+            self.state_sender.send_replace(DownloaderState::new(false));
         }
 
         match self.downloader.update() {
@@ -95,8 +91,7 @@ impl DefinitionDownloaderAsyncWrapper {
                 log::info!("sucessfully updated definitions");
                 self.update_retry_count = 0;
 
-                self.state_sender
-                    .send_replace(DefinitionDownloaderState::new(true));
+                self.state_sender.send_replace(DownloaderState::new(true));
             }
             Err(error) => {
                 if self.update_retry_count >= self.config.update_retry_count {
