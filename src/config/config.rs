@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-use super::{definition_downloader_config::DefinitionDownloaderConfig, git_config::GitConfig};
+use super::{
+    definition_downloader_config::DefinitionDownloaderConfig, git_config::GitConfig,
+    output_config::OutputConfig,
+};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     git: GitConfig,
     definition_downloader: DefinitionDownloaderConfig,
-    amqp_channel: String,
+    output: OutputConfig,
 }
 
 impl Config {
@@ -18,7 +21,7 @@ impl Config {
         self.definition_downloader.clone()
     }
 
-    pub fn amqp_channel(&self) -> String {
-        self.amqp_channel.clone()
+    pub fn output(&self) -> OutputConfig {
+        self.output.clone()
     }
 }

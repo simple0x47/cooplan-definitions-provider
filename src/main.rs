@@ -54,10 +54,10 @@ async fn run_definition_downloader() -> Result<(), Error> {
     });
 
     let connection_uri = std::env::var("AMQP_CONNECTION_URI").unwrap();
-    let channel_name = config.amqp_channel();
+    let output_config = config.output();
 
     tokio::spawn(async move {
-        let mut output = RabbitMQOutput::new(connection_uri, channel_name);
+        let mut output = RabbitMQOutput::new(connection_uri, output_config);
 
         match output.connect().await {
             Ok(_) => {

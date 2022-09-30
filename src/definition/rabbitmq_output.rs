@@ -9,21 +9,24 @@ use lapin::{
     BasicProperties, Channel, Connection, ConnectionProperties, Queue,
 };
 
-use crate::error::{Error, ErrorKind};
+use crate::{
+    config::output_config::OutputConfig,
+    error::{Error, ErrorKind},
+};
 
 pub struct RabbitMQOutput {
     connection_uri: String,
     connected: bool,
-    channel_name: String,
+    output_config: OutputConfig,
     channel: Option<Channel>,
 }
 
 impl RabbitMQOutput {
-    pub fn new(connection_uri: String, channel_name: String) -> RabbitMQOutput {
+    pub fn new(connection_uri: String, output_config: OutputConfig) -> RabbitMQOutput {
         RabbitMQOutput {
             connection_uri,
             connected: false,
-            channel_name,
+            output_config,
             channel: None,
         }
     }
@@ -50,7 +53,11 @@ impl RabbitMQOutput {
                     let arguments = FieldTable::from(map);
 
                     match channel
-                        .queue_declare(self.channel_name.as_str(), options, arguments)
+                        .queue_declare(
+                            self.output_config.amqp_channel_name.as_str(),
+                            options,
+                            arguments,
+                        )
                         .await
                     {
                         Ok(_) => {
@@ -84,7 +91,7 @@ impl RabbitMQOutput {
                     match channel
                         .basic_publish(
                             "",
-                            self.channel_name.as_str(),
+                            self.output_config.amqp_channel_name.as_str(),
                             BasicPublishOptions::default(),
                             serialized_definition.as_bytes(),
                             BasicProperties::default(),

@@ -12,5 +12,11 @@
         "update_retry_count": 5,
         "update_retry_interval_seconds": 300
     },
-    "amqp_channel": "definition-provider-output"
+    "output": {
+        "amqp_channel": "definition-provider-output",
+        "connection_retry_count": 5,
+        "connection_retry_interval_seconds": 300,
+        "set_retry_count": 5,
+        "set_retry_interval_seconds": 300
+    }
 }
