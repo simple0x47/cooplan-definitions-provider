@@ -1,14 +1,19 @@
 use cooplan_definitions_io_lib::category_file_io::build_for_all_categories;
-use cooplan_definitions_lib::validated_source_category::ValidatedSourceCategory;
+use cooplan_definitions_lib::{
+    definition::Definition, validated_source_category::ValidatedSourceCategory,
+};
 use tokio::sync::watch::{Receiver, Sender};
 
 use crate::{definition::downloader_state::DownloaderState, definition::reader_state::ReaderState};
+
+use super::git_version_detector::GitVersionDetector;
 
 /// Retrieves the definitions from a local directory, whenever the downloader downloads or updates that directory.
 pub struct FileReader {
     path: String,
     state_sender: Sender<ReaderState>,
     downloader_state_receiver: Receiver<DownloaderState>,
+    version_detector: GitVersionDetector,
 }
 
 impl FileReader {
@@ -16,11 +21,13 @@ impl FileReader {
         path: String,
         state_sender: Sender<ReaderState>,
         downloader_state_receiver: Receiver<DownloaderState>,
+        version_detector: GitVersionDetector,
     ) -> FileReader {
         FileReader {
             path,
             state_sender,
             downloader_state_receiver,
+            version_detector,
         }
     }
 
@@ -69,8 +76,18 @@ impl FileReader {
                     }
                 }
 
-                self.state_sender
-                    .send_replace(ReaderState::new(true, categories));
+                match self.version_detector.read_version() {
+                    Ok(version) => {
+                        log::info!("version detected: {}", version);
+                        let definition = Definition::new(version, categories);
+
+                        self.state_sender
+                            .send_replace(ReaderState::new(true, definition));
+                    }
+                    Err(error) => {
+                        log::error!("failed to read definition's version: {}", error);
+                    }
+                }
             }
             Err(error) => {
                 log::error!("failed to read category: {}", error);

@@ -9,6 +9,7 @@ use cooplan_definitions_lib::definition::Definition;
 use definition::downloader_state::DownloaderState;
 use definition::file_reader::FileReader;
 use definition::git_downloader::GitDownloader;
+use definition::git_version_detector::GitVersionDetector;
 use definition::output_async_wrapper::OutputAsyncWrapper;
 use definition::reader_state::ReaderState;
 use definition::{
@@ -53,11 +54,16 @@ async fn run_definition_downloader() -> Result<(), Error> {
 
     let definition_reader_state = ReaderState::new_not_available();
     let (reader_state_sender, mut reader_state_receiver) = watch::channel(definition_reader_state);
+
+    let version_detector_repository_local_dir = config.git().repository_local_dir;
     tokio::spawn(async move {
+        let version_detector = GitVersionDetector::new(version_detector_repository_local_dir);
+
         let mut reader = FileReader::new(
             String::from("./categories/"),
             reader_state_sender,
             downloader_state_receiver,
+            version_detector,
         );
 
         reader.run().await;
@@ -84,20 +90,22 @@ async fn run_definition_downloader() -> Result<(), Error> {
         output_wrapper.try_connect().await;
 
         if reader_state_receiver.borrow().available {
-            let categories = reader_state_receiver.borrow().categories();
-            let definition = Definition::new("1".to_string(), categories);
-
-            output_wrapper.try_set(definition).await;
+            let optional_definition = reader_state_receiver.borrow().definition();
+            match optional_definition {
+                Some(definition) => output_wrapper.try_set(definition).await,
+                None => log::warn!("reader state is available, but definition is none"),
+            }
         }
 
         loop {
             reader_state_receiver.changed().await;
 
             if reader_state_receiver.borrow().available {
-                let categories = reader_state_receiver.borrow().categories();
-                let definition = Definition::new("1".to_string(), categories);
-
-                output_wrapper.try_set(definition).await;
+                let optional_definition = reader_state_receiver.borrow().definition();
+                match optional_definition {
+                    Some(definition) => output_wrapper.try_set(definition).await,
+                    None => log::warn!("reader state is available, but definition is none"),
+                }
             }
         }
     });

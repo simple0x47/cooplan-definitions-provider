@@ -12,6 +12,7 @@ pub enum ErrorKind {
     ConnectionFailure,
     ChannelNotAvailable,
     DataWritingFailure,
+    VersionReadFailure,
 }
 
 #[derive(Debug)]
