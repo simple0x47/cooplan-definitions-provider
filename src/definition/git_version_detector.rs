@@ -18,13 +18,7 @@ impl GitVersionDetector {
             Ok(repository) => {
                 match repository.head() {
                     Ok(head) => match head.target() {
-                        Some(oid) => match repository.find_commit(oid) {
-                            Ok(commit) => Ok(commit.id().to_string()),
-                            Err(error) => Err(Error::new(
-                                ErrorKind::VersionReadFailure,
-                                format!("failed to read version of the definition: {}", error).as_str(),
-                            )),
-                        },
+                        Some(oid) => Ok(oid.to_string()),
                         None => Err(Error::new(
                             ErrorKind::VersionReadFailure,
                             "failed to read version of the definition: head does not reference a commit",
