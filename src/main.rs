@@ -9,11 +9,11 @@ use cooplan_definitions_lib::definition::Definition;
 use definition::downloader_state::DownloaderState;
 use definition::file_reader::FileReader;
 use definition::git_downloader::GitDownloader;
+use definition::output_async_wrapper::OutputAsyncWrapper;
 use definition::reader_state::ReaderState;
 use definition::{
     downloader_async_wrapper::DownloaderAsyncWrapper, rabbitmq_output::RabbitMQOutput,
 };
-use lapin::protocol::channel;
 use tokio::{sync::watch, task};
 
 #[tokio::main]
@@ -57,28 +57,18 @@ async fn run_definition_downloader() -> Result<(), Error> {
     let output_config = config.output();
 
     tokio::spawn(async move {
-        let mut output = RabbitMQOutput::new(connection_uri, output_config);
+        let mut output =
+            RabbitMQOutput::new(connection_uri, output_config.amqp_channel_name.clone());
 
-        match output.connect().await {
-            Ok(_) => {
-                if reader_state_receiver.borrow().available {
-                    let categories = reader_state_receiver.borrow().categories();
-                    match output
-                        .set(Definition::new("1".to_string(), categories))
-                        .await
-                    {
-                        Ok(_) => (),
-                        Err(error) => {
-                            println!("error: {}", error);
-                            return;
-                        }
-                    }
-                }
-            }
-            Err(error) => {
-                println!("error: {}", error);
-                return;
-            }
+        let mut output_wrapper = OutputAsyncWrapper::new(output_config, output);
+
+        output_wrapper.try_connect().await;
+
+        if reader_state_receiver.borrow().available {
+            let categories = reader_state_receiver.borrow().categories();
+            let definition = Definition::new("1".to_string(), categories);
+
+            output_wrapper.try_set(definition).await;
         }
 
         loop {
@@ -86,16 +76,9 @@ async fn run_definition_downloader() -> Result<(), Error> {
 
             if reader_state_receiver.borrow().available {
                 let categories = reader_state_receiver.borrow().categories();
-                match output
-                    .set(Definition::new("1".to_string(), categories))
-                    .await
-                {
-                    Ok(_) => (),
-                    Err(error) => {
-                        println!("error: {}", error);
-                        return;
-                    }
-                }
+                let definition = Definition::new("1".to_string(), categories);
+
+                output_wrapper.try_set(definition).await;
             }
         }
     });

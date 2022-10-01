@@ -1,32 +1,27 @@
-use std::{collections::BTreeMap, option};
+use std::collections::BTreeMap;
 
 use cooplan_definitions_lib::definition::Definition;
 use lapin::{
-    auth::Credentials,
     options::{BasicPublishOptions, QueueDeclareOptions},
-    protocol::basic::AMQPProperties,
     types::{AMQPValue, FieldTable, LongString, ShortString},
-    BasicProperties, Channel, Connection, ConnectionProperties, Queue,
+    BasicProperties, Channel, Connection, ConnectionProperties,
 };
 
-use crate::{
-    config::output_config::OutputConfig,
-    error::{Error, ErrorKind},
-};
+use crate::error::{Error, ErrorKind};
 
 pub struct RabbitMQOutput {
     connection_uri: String,
     connected: bool,
-    output_config: OutputConfig,
+    amqp_channel_name: String,
     channel: Option<Channel>,
 }
 
 impl RabbitMQOutput {
-    pub fn new(connection_uri: String, output_config: OutputConfig) -> RabbitMQOutput {
+    pub fn new(connection_uri: String, amqp_channel_name: String) -> RabbitMQOutput {
         RabbitMQOutput {
             connection_uri,
             connected: false,
-            output_config,
+            amqp_channel_name,
             channel: None,
         }
     }
@@ -53,11 +48,7 @@ impl RabbitMQOutput {
                     let arguments = FieldTable::from(map);
 
                     match channel
-                        .queue_declare(
-                            self.output_config.amqp_channel_name.as_str(),
-                            options,
-                            arguments,
-                        )
+                        .queue_declare(self.amqp_channel_name.as_str(), options, arguments)
                         .await
                     {
                         Ok(_) => {
@@ -84,14 +75,14 @@ impl RabbitMQOutput {
         }
     }
 
-    pub async fn set(&self, definition: Definition) -> Result<(), Error> {
-        match serde_json::to_string(&definition) {
+    pub async fn set(&self, definition: &Definition) -> Result<(), Error> {
+        match serde_json::to_string(definition) {
             Ok(serialized_definition) => match &self.channel {
                 Some(channel) => {
                     match channel
                         .basic_publish(
                             "",
-                            self.output_config.amqp_channel_name.as_str(),
+                            self.amqp_channel_name.as_str(),
                             BasicPublishOptions::default(),
                             serialized_definition.as_bytes(),
                             BasicProperties::default(),
