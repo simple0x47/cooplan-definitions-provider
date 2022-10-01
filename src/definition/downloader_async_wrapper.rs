@@ -59,8 +59,8 @@ impl DownloaderAsyncWrapper {
                 self.state_sender.send_replace(DownloaderState::new(true));
             }
             Err(error) => {
+                log::warn!("failed to download definitions: {}", error);
                 if self.download_retry_count >= self.config.download_retry_count {
-                    log::error!("failed to download definitions: {}", error);
                     std::process::exit(1);
                 }
 
@@ -94,8 +94,8 @@ impl DownloaderAsyncWrapper {
                 self.state_sender.send_replace(DownloaderState::new(true));
             }
             Err(error) => {
+                log::warn!("failed to update definitions: {}", error);
                 if self.update_retry_count >= self.config.update_retry_count {
-                    log::warn!("failed to update definitions: {}", error);
                     return;
                 }
 
@@ -105,7 +105,7 @@ impl DownloaderAsyncWrapper {
                 .await;
 
                 self.update_retry_count += 1;
-                log::info!(
+                log::warn!(
                     "retrying to update definitions, count: {}",
                     self.update_retry_count
                 );

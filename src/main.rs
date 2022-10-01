@@ -28,13 +28,23 @@ async fn main() -> Result<(), Error> {
         }
     }
 
-    run_definition_downloader().await;
+    match run_definition_downloader().await {
+        Ok(_) => (),
+        Err(error) => {
+            log::error!("{}", error);
+        }
+    }
 
     Ok(())
 }
 
 async fn run_definition_downloader() -> Result<(), Error> {
-    let config = crate::config::config_reader_builder::default().read()?;
+    let config = match crate::config::config_reader_builder::default().read() {
+        Ok(config) => config,
+        Err(error) => {
+            return Err(error);
+        }
+    };
 
     let definition_downloader_state = DownloaderState::new(false);
 
@@ -53,7 +63,16 @@ async fn run_definition_downloader() -> Result<(), Error> {
         reader.run().await;
     });
 
-    let connection_uri = std::env::var("AMQP_CONNECTION_URI").unwrap();
+    let connection_uri = match std::env::var("AMQP_CONNECTION_URI") {
+        Ok(connection_uri) => connection_uri,
+        Err(error) => {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                format!("failed to retrieve connection uri: {}", error),
+            ))
+        }
+    };
+
     let output_config = config.output();
 
     tokio::spawn(async move {

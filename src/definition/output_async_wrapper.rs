@@ -35,8 +35,8 @@ impl OutputAsyncWrapper {
                 log::info!("sucessfully connected to output");
             }
             Err(error) => {
+                log::warn!("failed to connect to output: {}", error);
                 if self.connect_retry_count >= self.config.connection_retry_count {
-                    log::error!("failed to connect to output: {}", error);
                     std::process::exit(1);
                 }
 
@@ -64,8 +64,8 @@ impl OutputAsyncWrapper {
                 log::info!("sucessfully set new definition on output");
             }
             Err(error) => {
+                log::warn!("failed to set definition on output: {}", error);
                 if self.set_retry_count >= self.config.set_retry_count {
-                    log::error!("failed to set definition on output: {}", error);
                     std::process::exit(1);
                 }
 
