@@ -6,16 +6,16 @@ use crate::{
     git::{clone::git_clone, pull::git_pull},
 };
 
-pub struct DefinitionGitDownloader {
+pub struct GitDownloader {
     repository_url: String,
     repository_local_dir: String,
     remote_name: String,
     remote_branch: String,
 }
 
-impl DefinitionGitDownloader {
-    pub fn new(git_config: GitConfig) -> DefinitionGitDownloader {
-        DefinitionGitDownloader {
+impl GitDownloader {
+    pub fn new(git_config: GitConfig) -> GitDownloader {
+        GitDownloader {
             repository_url: git_config.repository_url,
             repository_local_dir: git_config.repository_local_dir,
             remote_name: git_config.remote_name,
