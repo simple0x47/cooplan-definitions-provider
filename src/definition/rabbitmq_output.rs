@@ -107,4 +107,11 @@ impl RabbitMQOutput {
             )),
         }
     }
+
+    pub fn is_connected(&self) -> bool {
+        match &self.channel {
+            Some(channel) => channel.status().connected(),
+            None => false,
+        }
+    }
 }

@@ -71,6 +71,10 @@ impl OutputAsyncWrapper {
 
                 sleep(Duration::from_secs(self.config.set_retry_interval_seconds)).await;
 
+                if !self.output.is_connected() {
+                    self.try_connect().await;
+                }
+
                 self.set_retry_count += 1;
                 log::warn!(
                     "retrying to set definition on output, count: {}",
