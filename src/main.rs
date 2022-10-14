@@ -1,15 +1,13 @@
 pub mod config;
 pub mod definition;
 pub mod error;
-pub mod git;
 
 use std::io::{Error, ErrorKind};
 
-use cooplan_definitions_lib::definition::Definition;
+use cooplan_definition_git_downloader::downloader::Downloader;
+use cooplan_definition_git_downloader::version_detector::VersionDetector;
 use definition::downloader_state::DownloaderState;
 use definition::file_reader::FileReader;
-use definition::git_downloader::GitDownloader;
-use definition::git_version_detector::GitVersionDetector;
 use definition::output_async_wrapper::OutputAsyncWrapper;
 use definition::reader_state::ReaderState;
 use definition::{
@@ -57,7 +55,7 @@ async fn run_definition_downloader() -> Result<(), Error> {
 
     let version_detector_repository_local_dir = config.git().repository_local_dir;
     tokio::spawn(async move {
-        let version_detector = GitVersionDetector::new(version_detector_repository_local_dir);
+        let version_detector = VersionDetector::new(version_detector_repository_local_dir);
 
         let mut reader = FileReader::new(
             String::from("./categories/"),
@@ -114,7 +112,7 @@ async fn run_definition_downloader() -> Result<(), Error> {
     let git_config = config.git();
 
     let download = task::spawn(async move {
-        let definition_git_downloader = GitDownloader::new(git_config);
+        let definition_git_downloader = Downloader::new(git_config);
         let mut definition_wrapper = DownloaderAsyncWrapper::new(
             definition_git_downloader,
             definition_downloader_config,

@@ -1,15 +1,16 @@
 use std::time::Duration;
 
 use async_recursion::async_recursion;
+use cooplan_definition_git_downloader::downloader::Downloader;
 use tokio::{sync::watch::Sender, time::sleep};
 
 use crate::{
     config::definition_downloader_config::DefinitionDownloaderConfig,
-    definition::downloader_state::DownloaderState, definition::git_downloader::GitDownloader,
+    definition::downloader_state::DownloaderState,
 };
 
 pub struct DownloaderAsyncWrapper {
-    downloader: GitDownloader,
+    downloader: Downloader,
     config: DefinitionDownloaderConfig,
     state_sender: Sender<DownloaderState>,
 
@@ -19,7 +20,7 @@ pub struct DownloaderAsyncWrapper {
 
 impl DownloaderAsyncWrapper {
     pub fn new(
-        definition_downloader: GitDownloader,
+        definition_downloader: Downloader,
         definition_downloader_config: DefinitionDownloaderConfig,
         definition_downloader_state_sender: Sender<DownloaderState>,
     ) -> DownloaderAsyncWrapper {

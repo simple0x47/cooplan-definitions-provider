@@ -1,8 +1,8 @@
+use cooplan_definition_git_downloader::git_config::GitConfig;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    definition_downloader_config::DefinitionDownloaderConfig, git_config::GitConfig,
-    output_config::OutputConfig,
+    definition_downloader_config::DefinitionDownloaderConfig, output_config::OutputConfig,
 };
 
 #[derive(Deserialize, Serialize)]

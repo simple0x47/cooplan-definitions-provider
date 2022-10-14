@@ -1,3 +1,4 @@
+use cooplan_definition_git_downloader::version_detector::VersionDetector;
 use cooplan_definitions_io_lib::category_file_io::build_for_all_categories;
 use cooplan_definitions_lib::{
     definition::Definition, validated_source_category::ValidatedSourceCategory,
@@ -6,14 +7,12 @@ use tokio::sync::watch::{Receiver, Sender};
 
 use crate::{definition::downloader_state::DownloaderState, definition::reader_state::ReaderState};
 
-use super::git_version_detector::GitVersionDetector;
-
 /// Retrieves the definitions from a local directory, whenever the downloader downloads or updates that directory.
 pub struct FileReader {
     path: String,
     state_sender: Sender<ReaderState>,
     downloader_state_receiver: Receiver<DownloaderState>,
-    version_detector: GitVersionDetector,
+    version_detector: VersionDetector,
 }
 
 impl FileReader {
@@ -21,7 +20,7 @@ impl FileReader {
         path: String,
         state_sender: Sender<ReaderState>,
         downloader_state_receiver: Receiver<DownloaderState>,
-        version_detector: GitVersionDetector,
+        version_detector: VersionDetector,
     ) -> FileReader {
         FileReader {
             path,
