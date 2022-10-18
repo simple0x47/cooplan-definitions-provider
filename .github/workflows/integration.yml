@@ -36,4 +36,4 @@ jobs:
         env:
           GIT_USERNAME: 'simple0x47'
           GIT_PASSWORD: ${{ secrets.ACCESS_TOKEN }}
-          AMQP_CONNECTION_URI: 'amqp://guest:guest@localhost:5672'
+          AMQP_CONNECTION_URI: 'amqp://guest:guest@127.0.0.1:5672'
