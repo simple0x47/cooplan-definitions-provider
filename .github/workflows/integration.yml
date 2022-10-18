@@ -1,0 +1,39 @@
+name: Integration testing
+on: push
+
+jobs:
+  # Label of the container job
+  container-job:
+    # Containers must run in Linux based operating systems
+    runs-on: ubuntu-latest
+    # Docker Hub image that `container-job` executes in
+    container: rust
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      rabbitmq:
+        # Docker Hub image
+        image: rabbitmq:3.11-management
+
+    steps:
+      - name: Checkout provider's code
+        uses: actions/checkout@v3
+        with:
+          path: 'provider'
+      - name: Checkout consumer's code
+        uses: actions/checkout@v3
+        with:
+          repository: 'simple0x47/cooplan-definition-consumer'
+          path: 'consumer'
+      - name: Run provider in background and consumer
+        run: |
+          cd provider
+          cargo run &
+          cd ../
+          cd consumer
+          cargo run
+        env:
+          GIT_USERNAME: 'simple0x47'
+          GIT_PASSWORD: ${{ secrets.ACCESS_TOKEN }}
+          AMQP_CONNECTION_URI: 'amqp://guest:guest@localhost:5672'
