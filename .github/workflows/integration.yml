@@ -43,4 +43,4 @@ jobs:
         env:
           GIT_USERNAME: 'simple0x47'
           GIT_PASSWORD: ${{ secrets.ACCESS_TOKEN }}
-          AMQP_CONNECTION_URI: ${{ format('{0}:{1}', 'amqp://guest:guest@127.0.0.1', job.services.rabbitmq.ports['5672']) }}
+          AMQP_CONNECTION_URI: ${{ format('{0}:{1}', 'amqp://guest:guest@rabbitmq', job.services.rabbitmq.ports['5672']) }}
