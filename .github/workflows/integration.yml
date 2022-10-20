@@ -15,8 +15,6 @@ jobs:
       rabbitmq:
         # Docker Hub image
         image: rabbitmq:3.11
-        ports:
-          - 5672:5672
     steps:
       - name: Checkout provider's code
         uses: actions/checkout@v3
