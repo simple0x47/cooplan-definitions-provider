@@ -19,8 +19,7 @@ jobs:
           RABBITMQ_DEFAULT_USER: guest
           RABBITMQ_DEFAULT_PASS: guest
         ports:
-          - 5672:5672
-
+          - 5672
     steps:
       - name: Checkout provider's code
         uses: actions/checkout@v3
@@ -31,6 +30,9 @@ jobs:
         with:
           repository: 'simple0x47/cooplan-definition-consumer'
           path: 'consumer'
+      - name: Wait 15 seconds for RabbitMQ service
+        run: sleep 15s
+        shell: bash
       - name: Run provider in background and consumer
         run: |
           cd provider
@@ -41,4 +43,4 @@ jobs:
         env:
           GIT_USERNAME: 'simple0x47'
           GIT_PASSWORD: ${{ secrets.ACCESS_TOKEN }}
-          AMQP_CONNECTION_URI: 'amqp://guest:guest@127.0.0.1:5672'
+          AMQP_CONNECTION_URI: ${{ format('{0}:{1}'), amqp://guest:guest@127.0.0.1', job.services.rabbitmq.ports['5672'] }}
